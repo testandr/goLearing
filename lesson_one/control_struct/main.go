@@ -21,6 +21,7 @@ func main() {
 		"firstName": "Vasily",
 		"lastName":  "Romanov",
 	}
+
 	if firstName, ok := mm["firstName"]; ok {
 		println("firstName key exist, = ", firstName)
 	} else {

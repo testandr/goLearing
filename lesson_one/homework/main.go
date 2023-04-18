@@ -1,5 +1,10 @@
 package main
 
+import (
+	"sort"
+	"strconv"
+)
+
 func ReturnInt() int {
 	numInt := 1
 	return numInt
@@ -20,23 +25,42 @@ func ReturnIntSlice() []int {
 	return numSlice
 }
 
-func IntSliceToString() string {
-	str := "1723100500"
+func IntSliceToString(slInt []int) string {
+	var str string
+	for _, v := range slInt {
+		str += strconv.Itoa(v)
+	}
 	return str
 }
 
-func MergeSlices() []int32 {
-	slFloat := []float32{1.1, 2.1, 3.1}
-	slInt := []int32{4, 5}
-	var slComnined = []int32{}
-	for _, v := range slFloat {
-		slComnined = append(slComnined, int32(v))
+func MergeSlices(slFloat []float32, slInt []int32) []int {
+	var slFloatLen = len(slFloat)
+	var slComnined = make([]int, slFloatLen+len(slInt))
+
+	for i := range slFloat {
+		slComnined[i] = int(slFloat[i])
 	}
 
-	slComnined = append(slComnined, slInt...)
+	for i := range slInt {
+		slComnined[i+slFloatLen] = int(slInt[i])
+	}
+
 	return slComnined
 }
 
-func GetMapValuesSortedByKey() {
+func GetMapValuesSortedByKey(input map[int]string) []string {
+	var result = make([]string, len(input))
+	var keys []int
 
+	for i := range input {
+		keys = append(keys, i)
+	}
+
+	sort.Ints(keys)
+
+	for i, key := range keys {
+		result[i] = input[key]
+	}
+
+	return result
 }
