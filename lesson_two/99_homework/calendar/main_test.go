@@ -2,9 +2,24 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 )
+
+type Calendar struct {
+	month   string
+	quarter int
+}
+
+func NewCalendar(parsed time.Time) Calendar {
+
+	calendar := Calendar{
+		month:   strconv.Itoa(int(parsed.Month())),
+		quarter: 0,
+	}
+	return
+}
 
 func TestCurrentQuarter(t *testing.T) {
 	cases := []struct {
