@@ -18,7 +18,24 @@ func NewCalendar(parsed time.Time) Calendar {
 		month:   strconv.Itoa(int(parsed.Month())),
 		quarter: 0,
 	}
-	return
+
+	for i := 0; i < len(calendar.month); i++ {
+		switch calendar.month {
+		case "1", "2", "3":
+			calendar.quarter = 1
+		case "4", "5", "6":
+			calendar.quarter = 2
+		case "7", "8", "9":
+			calendar.quarter = 3
+		case "10", "11", "12":
+			calendar.quarter = 4
+		}
+	}
+	return calendar
+}
+
+func (c Calendar) CurrentQuarter() int {
+	return c.quarter
 }
 
 func TestCurrentQuarter(t *testing.T) {
