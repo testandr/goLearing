@@ -5,11 +5,11 @@ import (
 	"strconv"
 )
 
-// type memoizeFunction func(int, ...int) interface{}
+type memoizeFunction func(int) interface{}
 
 // // TODO реализовать
-// var fibonacci memoizeFunction
-// var romanForDecimal memoizeFunction
+var fibonacci memoizeFunction
+var romanForDecimal memoizeFunction
 
 func fib(num int) []int {
 	var result []int
@@ -147,16 +147,27 @@ func giveLetters(num int) string {
 
 // //TODO Write memoization function
 
-// func memoize(function memoizeFunction) memoizeFunction {
-// 	return function
-// }
+func memoize(fn memoizeFunction) memoizeFunction {
+	cache := make(map[int]interface{})
+
+	return func(input int) interface{} {
+		if val, found := cache[input]; found {
+			return val
+		}
+		result := fn(input)
+		cache[input] = result
+		return result
+	}
+}
 
 // // TODO обернуть функции fibonacci и roman в memoize
-// func init() {
-// }
+func init() {
+	fibonacci = memoize(fib)
+	romanForDecimal = memoize(romNum)
+}
 
 func main() {
-	// fmt.Println("Fibonacci(45) =", fibonacci(45).(int))
+	fmt.Println("Fibonacci(45) =", fibonacci(45).(int))
 	for _, x := range []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
 		14, 15, 16, 17, 18, 19, 20, 25, 30, 40, 50, 60, 69, 70, 80,
 		90, 99, 100, 200, 300, 400, 500, 600, 666, 700, 800, 900,
