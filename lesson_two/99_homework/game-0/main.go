@@ -11,8 +11,15 @@ var command string
 var params = []string{}
 
 type item struct {
-	name   string
-	status bool
+	name      string
+	placement string
+	status    bool
+	useble    bool
+}
+
+type furniture struct {
+	name  string
+	items []item
 }
 
 type room struct {
@@ -24,6 +31,7 @@ type room struct {
 	defDescription string
 	defDescState   bool
 	connection     map[string]bool
+	invetory       []furniture
 }
 
 type character struct {
@@ -33,25 +41,48 @@ type character struct {
 	bagPutOn   bool
 }
 
+var table = furniture{
+	name: "стол",
+	items: []item{
+		keys,
+		workbooks,
+	},
+}
+
+var chair = furniture{
+	name: "стул",
+	items: []item{
+		bag,
+	},
+}
+
 /*ITEMS*/
 var cup = item{
-	name:   "кружка",
-	status: true,
+	name:      "кружка",
+	placement: "стол",
+	status:    true,
+	useble:    false,
 }
 
 var keys = item{
-	name:   "ключи",
-	status: true,
+	name:      "ключи",
+	placement: "стол",
+	status:    true,
+	useble:    false,
 }
 
 var workbooks = item{
-	name:   "конспекты",
-	status: true,
+	name:      "конспекты",
+	placement: "стол",
+	status:    true,
+	useble:    false,
 }
 
 var bag = item{
-	name:   "рюкзак",
-	status: true,
+	name:      "рюкзак",
+	placement: "стул",
+	status:    true,
+	useble:    true,
 }
 
 /*ROOMS*/
@@ -61,7 +92,7 @@ var kitchen = room{
 	isLoocked:      false,
 	items:          []item{cup},
 	characterIn:    true,
-	defDescription: "ты находишься на кухне, на столе чай, надо собрать рюкзак и идти в универ. можно пройти - коридор",
+	defDescription: "ты находишься на кухне, на столе чай, надо собрать рюкзак и идти в универ.",
 	defDescState:   true,
 	connection: map[string]bool{
 		"коридор": true,
@@ -101,12 +132,16 @@ var myRoom = room{
 		"коридор": true,
 		"улица":   false,
 	},
+	invetory: []furniture{
+		table,
+		chair,
+	},
 }
 
 var outside = room{
 	name:           "улица",
 	isEnterable:    true,
-	isLoocked:      false,
+	isLoocked:      true,
 	characterIn:    false,
 	defDescription: "на улице весна. можно пройти - домой",
 	defDescState:   true,
@@ -149,6 +184,11 @@ func initGame() {
 			continue
 		}
 
+		// if handleCommand(line) == "ничего интересного. можно пройти - кухня, комната, улица" {
+		// 	fmt.Println(handleCommand(line))
+		// 	break
+		// }
+
 	}
 
 }
@@ -188,45 +228,94 @@ func (rm *room) characterLeftRoom() {
 	rm.characterIn = false
 }
 
-/* COMMANDS */
-
-func lookAround(i int) string {
-	var result string
-	// var table = "на столе "
-	// switch gameMap[i].name {
-	// case "кухня":
-	// 	result = "ты находишься на" + " " + gameMap[i].name + ", "
-
-	// 	for _, value := range gameMap[i].items {
-	// 		// fmt.Printf("Value of %v is %v\n\n", value.name, value.status)
-	// 		if value.status {
-	// 			table += value.name
-	// 		}
-	// 	}
-	// 	result += ". надо собрать рюкзак и идти в универ." + " "
-	// 	result += "можно пройти -" + " " + gameMap[i+1].name
-	// case "коридор":
-	// 	result = "ничего интересного. можно пройти -" + gameMap[i-1].name + gameMap[i+1].name + gameMap[i+2].name
-	// case "комната":
-	// 	result = "на столе:" + gameMap[i].items[0].name + " " + gameMap[i].items[1].name + " " + "на стуле - " + gameMap[i].items[2].name + " " + "можно пройти - " + gameMap[i-1].name
-	// }
+func getRoomWithChar() room {
+	var result room
 	for _, room := range gameMap {
 		if room.characterIn {
-			if room.defDescState {
-				result = room.defDescription
-			}
+			result = room
 		}
 	}
 	return result
 }
 
+/* COMMANDS */
+
+func lookAround() string {
+
+	var result string
+
+	roomIn := getRoomWithChar()
+
+	if roomIn.defDescState {
+		result = roomIn.defDescription
+	} else {
+		whereToGo := getWhereToGoStr(roomIn)
+
+		result = whereToGo
+	}
+	return result
+}
+
+func getWhereToGoStr(room room) string {
+	sum := 0
+	result := "можно пройти -"
+
+	for rmName, status := range room.connection {
+		sum += 1
+		if status {
+			if sum == len(room.connection)-1 {
+				result += " " + rmName
+			} else {
+				result += " " + rmName + "," + " "
+			}
+		}
+
+	}
+
+	return result
+}
+
+func getRoomItemsStr(room room) string {
+	onTable := "на столе:"
+	onChair := "на стуле -"
+
+	for _, furniture := range room.invetory {
+		switch furniture.name {
+		case "стол":
+			for i, item := range furniture.items {
+				if item.status {
+					if i == len(furniture.items)-1 {
+						onTable += " " + item.name
+					} else {
+						onTable += " " + item.name + "," + " "
+					}
+				}
+			}
+		case "стyл":
+			for i, item := range furniture.items {
+				if item.status {
+					if i == len(furniture.items)-1 {
+						onChair += " " + item.name
+					} else {
+						onChair += " " + item.name + "," + " "
+					}
+				}
+			}
+		}
+	}
+	return ""
+}
+
 func goTo() string {
+
 	var result string
 	var num int
+
 	for _, room := range gameMap {
 		fmt.Printf("Название комнты %v\n", room.name)
 		fmt.Printf("Состояние игрока в этой комнате %v\n\n", room.characterIn)
 	}
+
 	for i, room := range gameMap {
 		if room.characterIn {
 			num = i
@@ -237,10 +326,11 @@ func goTo() string {
 		result = "вы уже находитесь в" + " " + gameMap[num].name
 	}
 	fmt.Printf("Комната из которой выходим %v\n", gameMap[num].name)
+
 	for room, state := range gameMap[num].connection {
 		fmt.Printf("room %v\n", room)
 		fmt.Printf("state %v\n", state)
-		if room == params[0] && state {
+		if room == params[0] && state && !gameMap[num].isLoocked {
 			fmt.Println("статус положительный")
 			fmt.Printf("Статус игрока %v в комнате %v до его изменения\n", gameMap[num].characterIn, gameMap[num].name)
 			gameMap[num].characterLeftRoom()
@@ -257,6 +347,8 @@ func goTo() string {
 				}
 			}
 			break
+		} else if room == params[0] && state && gameMap[num].isLoocked {
+			result = "дверь закрыта"
 		} else {
 			result = "нет пути в" + " " + params[0]
 		}
@@ -334,12 +426,8 @@ func handleCommand(userText string) string {
 	}
 	for key, _ := range commands {
 		if key == command {
-			if checkUserTextLength(strings.Split(userText, " ")) {
-				getCommandsParams(strings.Split(userText, " "))
-				return commands[command].(func() string)()
-			} else if !checkUserTextLength(strings.Split(userText, " ")) {
-				return commands[command].(func(int) string)(ch.getCharPosition())
-			}
+			getCommandsParams(strings.Split(userText, " "))
+			return commands[command].(func() string)()
 		}
 	}
 
