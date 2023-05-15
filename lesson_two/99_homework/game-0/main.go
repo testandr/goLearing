@@ -16,18 +16,24 @@ type item struct {
 }
 
 type room struct {
-	name        string
-	isEnterable bool
-	isLoocked   bool
-	items       []item
+	name           string
+	isEnterable    bool
+	isLoocked      bool
+	items          []item
+	characterIn    bool
+	defDescription string
+	defDescState   bool
+	connection     map[string]bool
 }
 
 type character struct {
-	bag       []string
-	status    int
-	bagStatus bool
+	bag        []string
+	status     int
+	bagAvaible bool
+	bagPutOn   bool
 }
 
+/*ITEMS*/
 var cup = item{
 	name:   "кружка",
 	status: true,
@@ -48,17 +54,34 @@ var bag = item{
 	status: true,
 }
 
+/*ROOMS*/
 var kitchen = room{
-	name:        "кухня",
-	isEnterable: true,
-	isLoocked:   false,
-	items:       []item{cup},
+	name:           "кухня",
+	isEnterable:    true,
+	isLoocked:      false,
+	items:          []item{cup},
+	characterIn:    true,
+	defDescription: "ты находишься на кухне, на столе чай, надо собрать рюкзак и идти в универ. можно пройти - коридор",
+	defDescState:   true,
+	connection: map[string]bool{
+		"коридор": true,
+		"комната": false,
+		"улица":   false,
+	},
 }
 
 var corridor = room{
-	name:        "коридор",
-	isEnterable: true,
-	isLoocked:   false,
+	name:           "коридор",
+	isEnterable:    true,
+	isLoocked:      false,
+	characterIn:    false,
+	defDescription: "ничего интересного. можно пройти - кухня, комната, улица",
+	defDescState:   true,
+	connection: map[string]bool{
+		"кухня":   true,
+		"комната": true,
+		"улица":   true,
+	},
 }
 
 var myRoom = room{
@@ -70,12 +93,28 @@ var myRoom = room{
 		workbooks,
 		bag,
 	},
+	characterIn:    false,
+	defDescription: "ты в своей комнате. можно пройти - коридор",
+	defDescState:   true,
+	connection: map[string]bool{
+		"кухня":   false,
+		"коридор": true,
+		"улица":   false,
+	},
 }
 
 var outside = room{
-	name:        "улица",
-	isEnterable: true,
-	isLoocked:   false,
+	name:           "улица",
+	isEnterable:    true,
+	isLoocked:      false,
+	characterIn:    false,
+	defDescription: "на улице весна. можно пройти - домой",
+	defDescState:   true,
+	connection: map[string]bool{
+		"кухня":   false,
+		"коридор": true,
+		"комната": false,
+	},
 }
 
 var gameMap = []room{
@@ -86,9 +125,10 @@ var gameMap = []room{
 }
 
 var ch = character{
-	bag:       []string{},
-	status:    0,
-	bagStatus: false,
+	bag:        []string{},
+	status:     0,
+	bagAvaible: false,
+	bagPutOn:   false,
 }
 
 func main() {
@@ -113,80 +153,124 @@ func initGame() {
 
 }
 
+/* CHARACTER */
+
 func (ch *character) updateCharPosition(i int) {
 	ch.status = i
 }
 
 func (ch *character) getCharPosition() int {
-	position := ch.status
-	return position
+	// position := ch.status
+	return ch.status
 }
 
-func (ch character) getBagStatus() bool {
-	return ch.bagStatus
+func (ch character) getBagAvaiability() bool {
+	return ch.bagAvaible
 }
-func (ch *character) changeBagStatus() {
-	ch.bagStatus = true
+
+func (ch character) getBagState() bool {
+	return ch.bagPutOn
 }
+
+func (ch *character) changeBagAvaiability() {
+	ch.bagAvaible = true
+}
+
+func (ch *character) changeBagState() {
+	ch.bagPutOn = true
+}
+
+func (rm *room) characterEnteredRoom() {
+	rm.characterIn = true
+}
+
+func (rm *room) characterLeftRoom() {
+	rm.characterIn = false
+}
+
+/* COMMANDS */
 
 func lookAround(i int) string {
 	var result string
-	var table = "на столе "
-	switch gameMap[i].name {
-	case "кухня":
-		result = "ты находишься на" + " " + gameMap[i].name + ", "
+	// var table = "на столе "
+	// switch gameMap[i].name {
+	// case "кухня":
+	// 	result = "ты находишься на" + " " + gameMap[i].name + ", "
 
-		for _, value := range gameMap[i].items {
-			// fmt.Printf("Value of %v is %v\n\n", value.name, value.status)
-			if value.status {
-				table += value.name
+	// 	for _, value := range gameMap[i].items {
+	// 		// fmt.Printf("Value of %v is %v\n\n", value.name, value.status)
+	// 		if value.status {
+	// 			table += value.name
+	// 		}
+	// 	}
+	// 	result += ". надо собрать рюкзак и идти в универ." + " "
+	// 	result += "можно пройти -" + " " + gameMap[i+1].name
+	// case "коридор":
+	// 	result = "ничего интересного. можно пройти -" + gameMap[i-1].name + gameMap[i+1].name + gameMap[i+2].name
+	// case "комната":
+	// 	result = "на столе:" + gameMap[i].items[0].name + " " + gameMap[i].items[1].name + " " + "на стуле - " + gameMap[i].items[2].name + " " + "можно пройти - " + gameMap[i-1].name
+	// }
+	for _, room := range gameMap {
+		if room.characterIn {
+			if room.defDescState {
+				result = room.defDescription
 			}
 		}
-		result += ". надо собрать рюкзак и идти в универ." + " "
-		result += "можно пройти -" + " " + gameMap[i+1].name
-	case "коридор":
-		result = "ничего интересного. можно пройти -" + gameMap[i-1].name + gameMap[i+1].name + gameMap[i+2].name
-	case "комната":
-		result = "на столе:" + gameMap[i].items[0].name + " " + gameMap[i].items[1].name + " " + "на стуле - " + gameMap[i].items[2].name + " " + "можно пройти - " + gameMap[i-1].name
 	}
-
 	return result
 }
 
 func goTo() string {
 	var result string
-
-	for i, name := range gameMap {
-		// fmt.Printf("Character position before update is %v\n", ch.getCharPosition())
-		// fmt.Printf("User entered is %v\n", params[0])
-		// fmt.Printf("Loop value is %v\n", name.name)
-		// fmt.Printf("i is %v\n", i)
-		// fmt.Printf("Difference between i and char postion is %v\n", i-ch.getCharPosition())
-
-		if name.name == params[0] && i-ch.getCharPosition() == 1 || name.name == params[0] && i-ch.getCharPosition() == -1 {
-			//fmt.Printf("Name.name is %v\n\n", name.name)
-			//	fmt.Printf("Params[0] is %v\n\n", params[0])
-
-			ch.updateCharPosition(i)
-			//	fmt.Printf("Character position after update is %v\n\n", ch.getCharPosition())
-			result = lookAround(i)
-			break
-		} else if name.name == params[0] && i-ch.getCharPosition() == 0 {
-			result = "вы уже находитесь в " + " " + gameMap[i].name
-
-		} else if name.name == params[0] && i-ch.getCharPosition() > 1 || name.name == params[0] && i-ch.getCharPosition() < -1 {
-			result = "нет пути в" + " " + gameMap[i].name
-
+	var num int
+	for _, room := range gameMap {
+		fmt.Printf("Название комнты %v\n", room.name)
+		fmt.Printf("Состояние игрока в этой комнате %v\n\n", room.characterIn)
+	}
+	for i, room := range gameMap {
+		if room.characterIn {
+			num = i
 		}
 	}
+
+	if gameMap[num].name == params[0] {
+		result = "вы уже находитесь в" + " " + gameMap[num].name
+	}
+	fmt.Printf("Комната из которой выходим %v\n", gameMap[num].name)
+	for room, state := range gameMap[num].connection {
+		fmt.Printf("room %v\n", room)
+		fmt.Printf("state %v\n", state)
+		if room == params[0] && state {
+			fmt.Println("статус положительный")
+			fmt.Printf("Статус игрока %v в комнате %v до его изменения\n", gameMap[num].characterIn, gameMap[num].name)
+			gameMap[num].characterLeftRoom()
+			fmt.Printf("Статус игрока %v в комнате %v после его изменения\n", gameMap[num].characterIn, gameMap[num].name)
+			for i, room := range gameMap {
+				if room.name == params[0] {
+					fmt.Printf("Статус игрока %v в комнате %v до его изменения\n", room.characterIn, room.name)
+					room.characterEnteredRoom()
+					fmt.Printf("Статус игрока %v в комнате %v после его изменения\n", room.characterIn, room.name)
+					fmt.Printf("Позиция игрока до ее изменения %v\n", ch.getCharPosition())
+					ch.updateCharPosition(i)
+					fmt.Printf("Позиция игрока после ее изменения %v\n\n", ch.getCharPosition())
+					result = room.defDescription
+				}
+			}
+			break
+		} else {
+			result = "нет пути в" + " " + params[0]
+		}
+	}
+
 	cleanParams()
+
 	return result
 }
 
 func takeItem() string {
 	var result string
-	if !ch.getBagStatus() {
-		ch.changeBagStatus()
+	if !ch.getBagAvaiability() {
+		ch.changeBagAvaiability()
 		changeItemStatus()
 		result = "вы одели: рюкзак"
 	} else {
@@ -204,12 +288,10 @@ func takeItem() string {
 	return result
 }
 
-func changeItemStatus() {
-	for i, val := range gameMap[ch.getCharPosition()].items {
-		if val.name == params[0] {
-			gameMap[ch.getCharPosition()].items[i].status = false
-		}
-	}
+/* HELP COMMANDS */
+
+func getTheCommand(userText []string) {
+	command = userText[0]
 }
 
 func checkUserTextLength(userText []string) bool {
@@ -217,10 +299,6 @@ func checkUserTextLength(userText []string) bool {
 		return true
 	}
 	return false
-}
-
-func getTheCommand(userText []string) {
-	command = userText[0]
 }
 
 func getCommandsParams(userText []string) {
@@ -237,6 +315,14 @@ func cleanParams() {
 	//fmt.Printf("Params before cleaning %v\n\n", params)
 	params = nil
 	// fmt.Printf("Params after cleaning %v\n\n", params)
+}
+
+func changeItemStatus() {
+	for i, val := range gameMap[ch.getCharPosition()].items {
+		if val.name == params[0] {
+			gameMap[ch.getCharPosition()].items[i].status = false
+		}
+	}
 }
 
 func handleCommand(userText string) string {
