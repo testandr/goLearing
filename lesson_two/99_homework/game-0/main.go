@@ -152,11 +152,11 @@ var outside = room{
 	},
 }
 
-var gameMap = []room{
-	kitchen,
-	corridor,
-	myRoom,
-	outside,
+var gameMap = []*room{
+	&kitchen,
+	&corridor,
+	&myRoom,
+	&outside,
 }
 
 var ch = character{
@@ -204,11 +204,11 @@ func (ch *character) getCharPosition() int {
 	return ch.status
 }
 
-func (ch character) getBagAvaiability() bool {
+func (ch *character) getBagAvaiability() bool {
 	return ch.bagAvaible
 }
 
-func (ch character) getBagState() bool {
+func (ch *character) getBagState() bool {
 	return ch.bagPutOn
 }
 
@@ -232,7 +232,7 @@ func getRoomWithChar() room {
 	var result room
 	for _, room := range gameMap {
 		if room.characterIn {
-			result = room
+			result = *room
 		}
 	}
 	return result
@@ -254,6 +254,29 @@ func lookAround() string {
 		result = whereToGo
 	}
 	return result
+
+	// if condition {
+	// 	if condition {
+	// 		if condition {
+	// 			if condition {
+	// 				if condition {
+	// 					result = ""
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+	// if condition {
+	// 	result = ""
+	// }
+	// if condition {
+	// 	result = ""
+	// }
+	// if condition {
+	// 	result = ""
+	// }
+
+	// return result
 }
 
 func getWhereToGoStr(room room) string {
