@@ -367,6 +367,7 @@ func goTo() string {
 					ch.updateCharPosition(i)
 					fmt.Printf("Позиция игрока после ее изменения %v\n\n", ch.getCharPosition())
 					result = room.defDescription
+
 				}
 			}
 			break

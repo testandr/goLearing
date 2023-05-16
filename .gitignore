@@ -1,0 +1,7 @@
+.cache
+.coverage
+.DS_Store
+
+/.venv/
+/.idea/
+/.vscode/*
