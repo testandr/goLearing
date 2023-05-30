@@ -1,9 +1,6 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
-	"os"
 	"strings"
 )
 
@@ -11,27 +8,28 @@ var command string
 var params = []string{}
 
 type item struct {
-	name      string
-	placement string
-	status    bool
-	useble    bool
+	name   string
+	status bool
+	useble bool
 }
 
 type furniture struct {
 	name  string
-	items []item
+	items []string
 }
 
 type room struct {
-	name           string
-	isEnterable    bool
-	isLoocked      bool
-	items          []item
-	characterIn    bool
-	defDescription string
-	defDescState   bool
-	connection     map[string]bool
-	invetory       []furniture
+	name        string
+	isEnterable bool
+	isLocked    bool
+	lockedItems []string
+	items       []item
+	characterIn bool
+	description string
+	descState   bool
+	connection  map[string]bool
+	doorsStatus map[string]bool
+	invetory    []furniture
 }
 
 type character struct {
@@ -41,130 +39,102 @@ type character struct {
 	bagPutOn   bool
 }
 
-var table = furniture{
-	name: "стол",
-	items: []item{
-		keys,
-		workbooks,
-	},
-}
-
-var chair = furniture{
-	name: "стул",
-	items: []item{
-		bag,
-	},
-}
-
 /*ITEMS*/
 var cup = item{
-	name:      "кружка",
-	placement: "стол",
-	status:    true,
-	useble:    false,
+	name:   "кружка",
+	status: true,
+	useble: false,
 }
 
 var keys = item{
-	name:      "ключи",
-	placement: "стол",
-	status:    true,
-	useble:    false,
+	name:   "ключи",
+	status: true,
+	useble: false,
 }
 
 var workbooks = item{
-	name:      "конспекты",
-	placement: "стол",
-	status:    true,
-	useble:    false,
+	name:   "конспекты",
+	status: true,
+	useble: false,
 }
 
 var bag = item{
-	name:      "рюкзак",
-	placement: "стул",
-	status:    true,
-	useble:    true,
+	name:   "рюкзак",
+	status: true,
+	useble: true,
 }
 
 /*ROOMS*/
-var kitchen = room{
-	name:           "кухня",
-	isEnterable:    true,
-	isLoocked:      false,
-	items:          []item{cup},
-	characterIn:    true,
-	defDescription: "ты находишься на кухне, на столе чай, надо собрать рюкзак и идти в универ.",
-	defDescState:   true,
-	connection: map[string]bool{
-		"коридор": true,
-		"комната": false,
-		"улица":   false,
-	},
-}
+//var kitchen = room{
+//	name:        "кухня",
+//	isEnterable: true,
+//	isLocked:    false,
+//	items:       []item{cup},
+//	characterIn: true,
+//	description: "ты находишься на кухне, на столе чай, надо собрать рюкзак и идти в универ. можно пройти - коридор",
+//	descState:   true,
+//	connection: map[string]bool{
+//		"коридор": true,
+//		"комната": false,
+//		"улица":   false,
+//	},
+//}
+//
+//var corridor = room{
+//	name:        "коридор",
+//	isEnterable: true,
+//	isLocked:    false,
+//	characterIn: false,
+//	description: "ничего интересного. можно пройти - кухня, комната, улица",
+//	descState:   true,
+//	connection: map[string]bool{
+//		"кухня":   true,
+//		"комната": true,
+//		"улица":   true,
+//	},
+//	doorsStatus: map[string]bool{
+//		"кухня":   false,
+//		"комната": false,
+//		"улица":   true,
+//	},
+//}
+//
+//var myRoom = room{
+//	name:        "комната",
+//	isEnterable: true,
+//	isLocked:    false,
+//	items: []item{
+//		keys,
+//		workbooks,
+//		bag,
+//	},
+//	characterIn: false,
+//	description: "ты в своей комнате. можно пройти - коридор",
+//	descState:   true,
+//	connection: map[string]bool{
+//		"кухня":   false,
+//		"коридор": true,
+//		"улица":   false,
+//	},
+//	invetory: []furniture{
+//		table,
+//		chair,
+//	},
+//}
+//
+//var outside room{
+//	name:        "улица",
+//	isEnterable: true,
+//	isLocked:    true,
+//	lockedItems: []string{"дверь"},
+//	characterIn: false,
+//	description: "на улице весна. можно пройти - домой",
+//	descState:   true,
+//}
 
-var corridor = room{
-	name:           "коридор",
-	isEnterable:    true,
-	isLoocked:      false,
-	characterIn:    false,
-	defDescription: "ничего интересного. можно пройти - кухня, комната, улица",
-	defDescState:   true,
-	connection: map[string]bool{
-		"кухня":   true,
-		"комната": true,
-		"улица":   true,
-	},
-}
+var gameMap []*room
 
-var myRoom = room{
-	name:        "комната",
-	isEnterable: true,
-	isLoocked:   false,
-	items: []item{
-		keys,
-		workbooks,
-		bag,
-	},
-	characterIn:    false,
-	defDescription: "ты в своей комнате. можно пройти - коридор",
-	defDescState:   true,
-	connection: map[string]bool{
-		"кухня":   false,
-		"коридор": true,
-		"улица":   false,
-	},
-	invetory: []furniture{
-		table,
-		chair,
-	},
-}
-
-var outside = room{
-	name:           "улица",
-	isEnterable:    true,
-	isLoocked:      true,
-	characterIn:    false,
-	defDescription: "на улице весна. можно пройти - домой",
-	defDescState:   true,
-	connection: map[string]bool{
-		"кухня":   false,
-		"коридор": true,
-		"комната": false,
-	},
-}
-
-var gameMap = []*room{
-	&kitchen,
-	&corridor,
-	&myRoom,
-	&outside,
-}
-
-var ch = character{
-	bag:        []string{},
-	status:     0,
-	bagAvaible: false,
-	bagPutOn:   false,
-}
+var ch character
 
 func main() {
 	initGame()
@@ -172,24 +142,165 @@ func main() {
 
 func initGame() {
 
-	for {
-		fmt.Println("\nВведите команду с вашим действием: ")
-		scanner := bufio.NewScanner(os.Stdin)
-		scanner.Scan()
-		line := scanner.Text()
-		if line == "конец" {
-			break
-		} else {
-			fmt.Println(handleCommand(line))
-			continue
-		}
-
-		// if handleCommand(line) == "ничего интересного. можно пройти - кухня, комната, улица" {
-		// 	fmt.Println(handleCommand(line))
-		// 	break
-		// }
-
+	var table = furniture{
+		name: "стол",
+		items: []string{
+			"ключи",
+			"конспекты",
+		},
 	}
+
+	var chair = furniture{
+		name: "стул",
+		items: []string{
+			"рюкзак",
+		},
+	}
+	var kitchen = room{
+		name:        "кухня",
+		isEnterable: true,
+		isLocked:    false,
+		items:       []item{cup},
+		characterIn: true,
+		description: "ты находишься на кухне, на столе чай, надо собрать рюкзак и идти в универ. можно пройти - коридор",
+		descState:   true,
+		connection: map[string]bool{
+			"коридор": true,
+			"комната": false,
+			"улица":   false,
+		},
+	}
+
+	var corridor = room{
+		name:        "коридор",
+		isEnterable: true,
+		isLocked:    false,
+		characterIn: false,
+		description: "ничего интересного. можно пройти - кухня, комната, улица",
+		descState:   true,
+		connection: map[string]bool{
+			"кухня":   true,
+			"комната": true,
+			"улица":   true,
+		},
+		doorsStatus: map[string]bool{
+			"кухня":   false,
+			"комната": false,
+			"улица":   true,
+		},
+	}
+
+	var myRoom = room{
+		name:        "комната",
+		isEnterable: true,
+		isLocked:    false,
+		items: []item{
+			keys,
+			workbooks,
+			bag,
+		},
+		characterIn: false,
+		description: "ты в своей комнате. можно пройти - коридор",
+		descState:   true,
+		connection: map[string]bool{
+			"кухня":   false,
+			"коридор": true,
+			"улица":   false,
+		},
+		invetory: []furniture{
+			table,
+			chair,
+		},
+	}
+
+	var outside = room{
+		name:        "улица",
+		isEnterable: true,
+		isLocked:    true,
+		lockedItems: []string{"дверь"},
+		characterIn: false,
+		description: "на улице весна. можно пройти - домой",
+		descState:   true,
+	}
+	gameMap = []*room{
+		&kitchen,
+		&corridor,
+		&myRoom,
+		&outside,
+	}
+
+	ch = character{
+		bag:        []string{},
+		status:     0,
+		bagAvaible: false,
+		bagPutOn:   false,
+	}
+	//testCommands := []string{
+	//	"осмотреться",
+	//	"идти коридор",
+	//	"идти комната",
+	//	"осмотреться",
+	//	"одеть рюкзак",
+	//	"взять ключи",
+	//	"взять конспекты",
+	//	"идти коридор",
+	//	"применить ключи дверь",
+	//	"идти улица",
+	//}
+
+	//testCommands2 := []string{
+	//	"осмотреться",
+	//	"завтракать",
+	//	"идти комната",
+	//	"идти коридор",
+	//	"применить ключи дверь",
+	//	"идти комната",
+	//	"осмотреться",
+	//	"взять ключи",
+	//	"одеть рюкзак",
+	//	"осмотреться",
+	//	"взять ключи",
+	//	"взять телефон",
+	//	"взять ключи",
+	//	"осмотреться",
+	//	"взять конспекты",
+	//	"осмотреться",
+	//	"идти коридор",
+	//	"идти кухня",
+	//	"осмотреться",
+	//	"идти коридор",
+	//	"идти улица",
+	//	"применить ключи дверь",
+	//	"применить телефон шкаф",
+	//	"применить ключи шкаф",
+	//	"идти улица",
+	//}
+	//
+	//for _, textCommand := range testCommands2 {
+	//	fmt.Printf("Команда: %v\n", textCommand)
+	//	result := handleCommand(textCommand)
+	//	fmt.Printf("Ответ: %v\n\n", result)
+	//}
+	// for {
+	// 	fmt.Println("\nВведите команду с вашим действием: ")
+	// 	scanner := bufio.NewScanner(os.Stdin)
+	// 	scanner.Scan()
+	// 	line := scanner.Text()
+	// 	fmt.Println(line)
+	// 	result := handleCommand(line)
+	// 	fmt.Println(result)
+	// 	if result == "на улице весна. можно пройти - домой" {
+	// 		break
+	// 	} else {
+	// 		continue
+	// 	}
+
+	// 	// if handleCommand(line) == "ничего интересного. можно пройти - кухня, комната, улица" {
+	// 	// 	fmt.Println(handleCommand(line))
+	// 	// 	break
+	// 	// }
+	// 	//
+	// }
 
 }
 
@@ -228,14 +339,18 @@ func (rm *room) characterLeftRoom() {
 	rm.characterIn = false
 }
 
-func getRoomWithChar() room {
-	var result room
-	for _, room := range gameMap {
-		if room.characterIn {
-			result = *room
+func (rm *room) changeLockStatus() {
+	rm.isLocked = false
+}
+
+func (fn *furniture) deleteItem() {
+	for i, v := range fn.items {
+		if v == params[0] {
+			fn.items[i] = fn.items[len(fn.items)-1]
+			fn.items[len(fn.items)-1] = ""
+			fn.items = fn.items[:len(fn.items)-1]
 		}
 	}
-	return result
 }
 
 /* COMMANDS */
@@ -244,162 +359,241 @@ func lookAround() string {
 
 	var result string
 
-	roomIn := getRoomWithChar()
+	roomIn := gameMap[ch.getCharPosition()]
 
-	if roomIn.defDescState {
-		result = roomIn.defDescription
-	} else {
-		whereToGo := getWhereToGoStr(roomIn)
-
-		result = whereToGo
-	}
-	return result
-
-	// if condition {
-	// 	if condition {
-	// 		if condition {
-	// 			if condition {
-	// 				if condition {
-	// 					result = ""
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
-	// if condition {
-	// 	result = ""
-	// }
-	// if condition {
-	// 	result = ""
-	// }
-	// if condition {
-	// 	result = ""
-	// }
-
-	// return result
-}
-
-func getWhereToGoStr(room room) string {
-	sum := 0
-	result := "можно пройти -"
-
-	for rmName, status := range room.connection {
-		sum += 1
-		if status {
-			if sum == len(room.connection)-1 {
-				result += " " + rmName
-			} else {
-				result += " " + rmName + "," + " "
-			}
-		}
-
+	// Проверка если статус у описания по умолчанию комнаты true
+	// то вернуть текст из поля description
+	if roomIn.descState {
+		result = roomIn.description
 	}
 
-	return result
-}
-
-func getRoomItemsStr(room room) string {
-	onTable := "на столе:"
-	onChair := "на стуле -"
-
-	for _, furniture := range room.invetory {
-		switch furniture.name {
-		case "стол":
-			for i, item := range furniture.items {
-				if item.status {
-					if i == len(furniture.items)-1 {
-						onTable += " " + item.name
-					} else {
-						onTable += " " + item.name + "," + " "
-					}
-				}
-			}
-		case "стyл":
-			for i, item := range furniture.items {
-				if item.status {
-					if i == len(furniture.items)-1 {
-						onChair += " " + item.name
-					} else {
-						onChair += " " + item.name + "," + " "
-					}
-				}
-			}
+	if roomIn.name == "кухня" {
+		if ch.bagAvaible {
+			result = "ты находишься на кухне, на столе чай, надо идти в универ. можно пройти - коридор"
 		}
 	}
-	return ""
+	if roomIn.name == "комната" {
+		if len(roomIn.invetory[0].items) > 0 && len(roomIn.invetory[1].items) > 0 {
+			sum := 0
+			var itemsStr string
+			for _, v := range roomIn.invetory[0].items {
+
+				if sum == len(roomIn.invetory[0].items)-1 {
+					itemsStr += " " + v
+				} else {
+					itemsStr += " " + v + ","
+				}
+				sum += 1
+			}
+
+			result = "на столе:" + itemsStr
+			result += "," + " " + "на стуле -"
+			itemsStr = ""
+			sum = 0
+
+			for _, v := range roomIn.invetory[1].items {
+
+				if sum == len(roomIn.invetory[1].items)-1 {
+					itemsStr += v
+				} else {
+					itemsStr += " " + v + ","
+				}
+				sum += 1
+			}
+
+			result += " " + itemsStr + "." + " " + "можно пройти - коридор"
+		}
+
+		if len(roomIn.invetory[0].items) == 0 && len(roomIn.invetory[1].items) > 0 {
+			sum := 0
+			var itemsStr string
+
+			for _, v := range roomIn.invetory[1].items {
+
+				if sum == len(roomIn.invetory[1].items)-1 {
+					itemsStr += v
+				} else {
+					itemsStr += " " + v + ","
+				}
+				sum += 1
+			}
+
+			result = "на стуле -" + itemsStr + "." + " " + "можно пройти - коридор"
+		}
+
+		if len(roomIn.invetory[0].items) > 0 && len(roomIn.invetory[1].items) == 0 {
+			sum := 0
+			var itemsStr string
+			for _, v := range roomIn.invetory[0].items {
+
+				if sum == len(roomIn.invetory[0].items)-1 {
+					itemsStr += " " + v
+				} else {
+					itemsStr += " " + v + ","
+				}
+				sum += 1
+			}
+
+			result = "на столе:" + itemsStr + "." + " " + "можно пройти - коридор"
+		}
+
+		if len(roomIn.invetory[0].items) == 0 && len(roomIn.invetory[1].items) == 0 && roomIn.name != "комната" {
+
+			result = "ничего интересного." + " " + "можно пройти - коридор"
+		}
+		if len(roomIn.invetory[0].items) == 0 && len(roomIn.invetory[1].items) == 0 && roomIn.name == "комната" {
+
+			result = "пустая комната." + " " + "можно пройти - коридор"
+		}
+	}
+
+	return result
 }
 
 func goTo() string {
-
+	var resRoom *room
 	var result string
-	var num int
+	var needToGo bool = false
+	var roomIn *room
 
-	for _, room := range gameMap {
-		fmt.Printf("Название комнты %v\n", room.name)
-		fmt.Printf("Состояние игрока в этой комнате %v\n\n", room.characterIn)
-	}
+	charPosition := ch.getCharPosition()
+	roomIn = gameMap[charPosition]
 
-	for i, room := range gameMap {
-		if room.characterIn {
-			num = i
+	if roomIn.name == params[0] {
+		result = "вы уже находитесь в" + " " + gameMap[charPosition].name
+	} else {
+		for conectRoom, state := range roomIn.connection {
+			if conectRoom == params[0] && state {
+				roomIn.characterLeftRoom()
+				needToGo = true
+				break
+			} else {
+				result = "нет пути в" + " " + params[0]
+			}
+
 		}
-	}
-
-	if gameMap[num].name == params[0] {
-		result = "вы уже находитесь в" + " " + gameMap[num].name
-	}
-	fmt.Printf("Комната из которой выходим %v\n", gameMap[num].name)
-
-	for room, state := range gameMap[num].connection {
-		fmt.Printf("room %v\n", room)
-		fmt.Printf("state %v\n", state)
-		if room == params[0] && state && !gameMap[num].isLoocked {
-			fmt.Println("статус положительный")
-			fmt.Printf("Статус игрока %v в комнате %v до его изменения\n", gameMap[num].characterIn, gameMap[num].name)
-			gameMap[num].characterLeftRoom()
-			fmt.Printf("Статус игрока %v в комнате %v после его изменения\n", gameMap[num].characterIn, gameMap[num].name)
+		if needToGo {
 			for i, room := range gameMap {
-				if room.name == params[0] {
-					fmt.Printf("Статус игрока %v в комнате %v до его изменения\n", room.characterIn, room.name)
-					room.characterEnteredRoom()
-					fmt.Printf("Статус игрока %v в комнате %v после его изменения\n", room.characterIn, room.name)
-					fmt.Printf("Позиция игрока до ее изменения %v\n", ch.getCharPosition())
+				if room.name == params[0] && !room.isLocked && room.name == "кухня" && ch.bagAvaible {
+					resRoom = room
+					resRoom.characterEnteredRoom()
 					ch.updateCharPosition(i)
-					fmt.Printf("Позиция игрока после ее изменения %v\n\n", ch.getCharPosition())
-					result = room.defDescription
-
+					result = "кухня, ничего интересного. можно пройти - коридор"
+					break
+				} else if room.name == params[0] && !room.isLocked {
+					resRoom = room
+					resRoom.characterEnteredRoom()
+					ch.updateCharPosition(i)
+					result = room.description
+					break
+				} else {
+					result = "дверь закрыта"
 				}
 			}
-			break
-		} else if room == params[0] && state && gameMap[num].isLoocked {
-			result = "дверь закрыта"
-		} else {
-			result = "нет пути в" + " " + params[0]
 		}
 	}
 
 	cleanParams()
-
 	return result
 }
 
 func takeItem() string {
 	var result string
-	if !ch.getBagAvaiability() {
+	charPosition := ch.getCharPosition()
+	roomIn := gameMap[charPosition]
+
+	if !ch.bagAvaible && params[0] != "рюкзак" {
+		cleanParams()
+		return "некуда класть"
+	}
+
+	if !ch.bagAvaible && params[0] == "рюкзак" {
 		ch.changeBagAvaiability()
-		changeItemStatus()
-		result = "вы одели: рюкзак"
-	} else {
-		for i, val := range gameMap[ch.getCharPosition()].items {
-			if val.name == params[0] {
-				gameMap[ch.getCharPosition()].items[i].status = false
-				ch.bag = append(ch.bag, gameMap[ch.getCharPosition()].items[i].name)
-				//	fmt.Printf("bag contains %v\n\n", ch.bag)
-				result += gameMap[ch.getCharPosition()].items[i].name
+		roomIn.invetory[1].deleteItem()
+		cleanParams()
+		return "вы одели: рюкзак"
+	}
+
+	for _, val := range roomIn.invetory[0].items {
+		if val == params[0] {
+			ch.bag = append(ch.bag, val)
+			result = "предмет добавлен в инвентарь:"
+			result += " " + val
+			roomIn.invetory[0].deleteItem()
+			break
+		} else {
+			result = "нет такого"
+		}
+	}
+
+	cleanParams()
+	return result
+}
+
+func checkItemInBag() bool {
+	var bagItemStatus bool
+	for _, bagItem := range ch.bag {
+		if params[0] == bagItem {
+			bagItemStatus = true
+			break
+		}
+	}
+	return bagItemStatus
+}
+func checkItemInRoom(roomName string) bool {
+	var roomItemStatus bool
+	for _, rm := range gameMap {
+		if rm.name == roomName {
+			for _, v := range rm.lockedItems {
+				if v == params[1] {
+					roomItemStatus = true
+					break
+				}
 			}
 		}
-
 	}
+	return roomItemStatus
+}
+
+func useItem() string {
+	var result string
+
+	roomIn := gameMap[ch.getCharPosition()]
+
+	var openedRoom *room
+	var closedRoom string
+
+	if !checkItemInBag() {
+		searchItem := params[0]
+		cleanParams()
+		return "нет предмета в инвентаре -" + " " + searchItem
+
+	} else {
+		for key, value := range roomIn.doorsStatus {
+			if value {
+				closedRoom = key
+				break
+			}
+		}
+	}
+
+	if !checkItemInRoom(closedRoom) {
+		cleanParams()
+		return "не к чему применить"
+	} else {
+		for _, rm := range gameMap {
+			if rm.name == closedRoom {
+				openedRoom = rm
+				break
+			}
+		}
+	}
+
+	if checkItemInBag() && checkItemInRoom(closedRoom) {
+		openedRoom.changeLockStatus()
+		result = "дверь открыта"
+	}
+
 	cleanParams()
 	return result
 }
@@ -420,17 +614,13 @@ func checkUserTextLength(userText []string) bool {
 func getCommandsParams(userText []string) {
 	for i, word := range userText {
 		if i > 0 {
-			//fmt.Printf("Функция 'getCommandsParams' \nИндекс %v Переданный параметр %v\n\n", i, word)
 			params = append(params, word)
-			//	fmt.Printf("Функция 'getCommandsParams' значение параметра %v\n\n", params)
 		}
 	}
 }
 
 func cleanParams() {
-	//fmt.Printf("Params before cleaning %v\n\n", params)
 	params = nil
-	// fmt.Printf("Params after cleaning %v\n\n", params)
 }
 
 func changeItemStatus() {
@@ -442,18 +632,26 @@ func changeItemStatus() {
 }
 
 func handleCommand(userText string) string {
+	var result string
+
 	getTheCommand(strings.Split(userText, " "))
 	commands := map[string]interface{}{
 		"осмотреться": lookAround,
 		"идти":        goTo,
 		"взять":       takeItem,
+		"одеть":       takeItem,
+		"применить":   useItem,
 	}
 	for key, _ := range commands {
 		if key == command {
 			getCommandsParams(strings.Split(userText, " "))
-			return commands[command].(func() string)()
+			result = commands[command].(func() string)()
+			break
+		} else {
+			result = "неизвестная команда"
 		}
 	}
 
-	return "неизвестная команда"
+	cleanParams()
+	return result
 }
